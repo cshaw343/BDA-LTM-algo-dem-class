@@ -1,0 +1,6 @@
+#---- Ignore all the useless R stuff ----
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
