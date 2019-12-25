@@ -31,13 +31,21 @@ vars = c("HHIDPN", word_recall_vars, serial7_vars, backwards_count_vars)
 HRS_data <- read_sas(here(
   "Data", "randhrs1992_2016v1_SAS_data", "randhrs1992_2016v1.sas7bdat"),
   n_max = n_max, col_select = vars) %>%
-  mutate_at("HHIDPN", as.factor)
+  mutate_at("HHIDPN", as.character)
 
 #---- Remove people missing ALL test scores ----
 #Removes 8376 people (42053 --> 33677)
 HRS_data$num_missing <- rowSums(is.na(HRS_data[, -1]))
 HRS_data$missing_all <- (HRS_data$num_missing == 30)*1
 HRS_data %<>% filter(missing_all == 0)
+
+#---- Remove those who don't appear in Wu algorithm data ----
+#Removes 3803 people (33677 --> 29874)
+#Create HHIDPN variable for Wu data
+Wu_algorithm$HHID = str_remove(Wu_algorithm$HHID, "^0+")
+Wu_algorithm %<>% unite("HHIDPN", c("HHID", "PN"), sep = "")
+
+HRS_data <- HRS_data[-which(!(HRS_data$HHIDPN %in% Wu_algorithm$HHIDPN)), ]
 
 #---- L-K-W summary scores ----
 
