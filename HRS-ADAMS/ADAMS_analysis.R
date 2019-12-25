@@ -45,7 +45,8 @@ HRS_data %<>% filter(missing_all == 0)
 Wu_algorithm$HHID = str_remove(Wu_algorithm$HHID, "^0+")
 Wu_algorithm %<>% unite("HHIDPN", c("HHID", "PN"), sep = "")
 
-HRS_data <- HRS_data[-which(!(HRS_data$HHIDPN %in% Wu_algorithm$HHIDPN)), ]
+#Inner join the data (only keeps those in HRS_data that appear in Wu_algorithm)
+HRS_data <- inner_join(HRS_data, Wu_algorithm, by = "HHIDPN")
 
 #---- L-K-W summary scores and classification ----
 #Classify individual as having dementia if summary score <= 6
@@ -56,12 +57,30 @@ lkw_dem_vars <- paste0("R", waves, "LKWDEM")
 HRS_data %<>% cbind(as.data.frame(matrix(nrow = nrow(HRS_data),
                                          ncol = 2*length(lkw_scores_vars))))
 
+#file suppresses console output
 colnames(HRS_data)[(ncol(HRS_data) - 19):ncol(HRS_data)] <-
-  c(dput(lkw_scores_vars), dput(lkw_dem_vars))
+  c(dput(lkw_scores_vars), dput(lkw_dem_vars), file = "TEMP")
 
 for(i in 1:length(lkw_scores_vars)){
   vars <- c(word_recall_vars[i], serial7_vars[i], backwards_count_vars[i])
   HRS_data[, lkw_scores_vars[i]] = rowSums(HRS_data[, vars])
   HRS_data[, lkw_dem_vars[i]] = (HRS_data[, lkw_scores_vars[i]] <= 6)*1
 }
+
+#---- Wu classification ----
+wu_dem_vars <- paste0("R", waves, "WUDEM")
+
+HRS_data %<>% cbind(as.data.frame(matrix(nrow = nrow(HRS_data),
+                                         ncol = length(wu_dem_vars))))
+
+colnames(HRS_data)[(ncol(HRS_data) - 9):ncol(HRS_data)] <-
+  dput(wu_dem_vars, file = "TEMP")
+
+for(i in 1:length(wu_dem_vars)){
+  vars <- c(word_recall_vars[i], serial7_vars[i], backwards_count_vars[i])
+  HRS_data[, lkw_scores_vars[i]] = rowSums(HRS_data[, vars])
+  HRS_data[, lkw_dem_vars[i]] = (HRS_data[, lkw_scores_vars[i]] <= 6)*1
+}
+
+
 
