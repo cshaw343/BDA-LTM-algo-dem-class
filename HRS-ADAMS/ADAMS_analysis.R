@@ -39,6 +39,18 @@ HRS_data$num_missing <- rowSums(is.na(HRS_data[, -1]))
 HRS_data$missing_all <- (HRS_data$num_missing == 30)*1
 HRS_data %<>% filter(missing_all == 0)
 
+#---- Remove people missing ALL Wu dementia probabilities ----
+#Removes 3621 people (34032 --> 30411)
+#Don't count the last variable because we are not using Wave 13
+wu_demprobs_vars <- head(colnames(Wu_algorithm)[which(
+  str_detect(colnames(Wu_algorithm), "dementpimp", negate = FALSE))], -1)
+
+Wu_algorithm$num_missing_probs <-
+  rowSums(is.na(Wu_algorithm[, wu_demprobs_vars]))
+Wu_algorithm$missing_all_probs <-
+  (Wu_algorithm$num_missing_probs == length(wu_demprobs_vars))*1
+Wu_algorithm %<>% filter(missing_all_probs == 0)
+
 #---- Remove those who don't appear in Wu algorithm data ----
 #Removes 3803 people (33677 --> 29874)
 #Create HHIDPN variable for Wu data
