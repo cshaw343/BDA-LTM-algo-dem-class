@@ -99,5 +99,8 @@ for(i in 1:length(wu_dem_vars)){
   HRS_data[, wu_dem_vars[i]] = (probs >= 0.5)*1
 }
 
+#---- Sensitivity/Specificity LKW vs. Wu ----
+#Can only consider those with directly measured cognitive assessments for now
+lkw_vs_wu <- sens_spec(HRS_data[, lkw_dem_vars], HRS_data[, wu_dem_vars])
 
 
