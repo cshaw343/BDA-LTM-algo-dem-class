@@ -52,7 +52,7 @@ Wu_algorithm$missing_all_probs <-
 Wu_algorithm %<>% filter(missing_all_probs == 0)
 
 #---- Remove those who don't appear in Wu algorithm data ----
-#Removes 3803 people (33677 --> 29874)
+#Removes 4453 people (33677 --> 29224)
 #Create HHIDPN variable for Wu data
 Wu_algorithm$HHID = str_remove(Wu_algorithm$HHID, "^0+")
 Wu_algorithm %<>% unite("HHIDPN", c("HHID", "PN"), sep = "")
@@ -69,7 +69,6 @@ lkw_dem_vars <- paste0("R", waves, "LKWDEM")
 HRS_data %<>% cbind(as.data.frame(matrix(nrow = nrow(HRS_data),
                                          ncol = 2*length(lkw_scores_vars))))
 
-#file suppresses console output
 colnames(HRS_data)[(ncol(HRS_data) - 19):ncol(HRS_data)] <-
   c(dput(lkw_scores_vars), dput(lkw_dem_vars))
 
@@ -87,8 +86,7 @@ wu_demprobs_vars <- colnames(HRS_data)[which(
 HRS_data %<>% cbind(as.data.frame(matrix(nrow = nrow(HRS_data),
                                          ncol = length(wu_dem_vars))))
 
-colnames(HRS_data)[(ncol(HRS_data) - 9):ncol(HRS_data)] <-
-  dput(wu_dem_vars, file = "TEMP")
+colnames(HRS_data)[(ncol(HRS_data) - 9):ncol(HRS_data)] <- dput(wu_dem_vars)
 
 for(i in 1:length(wu_dem_vars)){
   if(i == 1){
