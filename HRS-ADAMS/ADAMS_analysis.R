@@ -59,7 +59,7 @@ HRS_data %<>% cbind(as.data.frame(matrix(nrow = nrow(HRS_data),
 
 #file suppresses console output
 colnames(HRS_data)[(ncol(HRS_data) - 19):ncol(HRS_data)] <-
-  c(dput(lkw_scores_vars), dput(lkw_dem_vars), file = "TEMP")
+  c(dput(lkw_scores_vars), dput(lkw_dem_vars))
 
 for(i in 1:length(lkw_scores_vars)){
   vars <- c(word_recall_vars[i], serial7_vars[i], backwards_count_vars[i])
@@ -69,6 +69,8 @@ for(i in 1:length(lkw_scores_vars)){
 
 #---- Wu classification ----
 wu_dem_vars <- paste0("R", waves, "WUDEM")
+wu_demprobs_vars <- colnames(HRS_data)[which(
+  str_detect(colnames(HRS_data), "dementpimp", negate = FALSE))]
 
 HRS_data %<>% cbind(as.data.frame(matrix(nrow = nrow(HRS_data),
                                          ncol = length(wu_dem_vars))))
@@ -77,9 +79,14 @@ colnames(HRS_data)[(ncol(HRS_data) - 9):ncol(HRS_data)] <-
   dput(wu_dem_vars, file = "TEMP")
 
 for(i in 1:length(wu_dem_vars)){
-  vars <- c(word_recall_vars[i], serial7_vars[i], backwards_count_vars[i])
-  HRS_data[, lkw_scores_vars[i]] = rowSums(HRS_data[, vars])
-  HRS_data[, lkw_dem_vars[i]] = (HRS_data[, lkw_scores_vars[i]] <= 6)*1
+  if(i == 1){
+    probs <- pmax(HRS_data[, wu_demprobs_vars[i]],
+                  HRS_data[, wu_demprobs_vars[i + 1]], na.rm = TRUE)
+
+  } else{
+    probs <- HRS_data[, wu_demprobs_vars[i + 1]]
+  }
+  HRS_data[, wu_dem_vars[i]] = (probs >= 0.5)*1
 }
 
 
