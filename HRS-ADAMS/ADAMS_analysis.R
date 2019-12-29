@@ -124,5 +124,21 @@ fact_table %<>%
                      TRUE ~ "n01")) %>%
   unite(source_names, c(Source, FID), sep = "_", remove = FALSE)
 
+#Specify priors on sources
+#Order: priors on sensitivity, priors on 1 - specificity, priors on truth label
+# prior on sensitivity = c(\alpha_{11}, \alpha_{10})
+#                      = parameters based on mean = 0.7303, variance = 0.025
+# prior on 1 - specificity = c(\alpha_{01}, \alpha_{00})
+#                          = parameters based on mean = 0.021, variance = 0.01
+# prior on truth label = c(\beta_0, \beta_1)
+#                      = parameters based on mean = 0.5, variance = 0.05
+
+sensitivity_pars <- beta_parameters(mean = 0.7303, variance = 0.025)
+specificity_pars <- beta_parameters(mean = 0.021, variance = 0.01)
+truth_label_pars <- beta_parameters(mean = 0.5, variance = 0.05)
+
+LKW_priors <- c(sensitivity_pars, specificity_pars, truth_label_pars)
+names(LKW_priors) <- c("alpha_11", "alpha_10", "alpha_01", "alpha_00", "beta_0",
+                       "beta_1")
 
 
