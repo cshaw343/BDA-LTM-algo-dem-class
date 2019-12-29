@@ -1,10 +1,11 @@
-#---- Package Loading ----
+#---- Package Loading, Options, and Seed Setting ----
 if (!require("pacman"))
   install.packages("pacman", repos='http://cran.us.r-project.org')
 
 p_load("here", "haven", "tidyverse", "magrittr")
 
 options(scipen = 999)
+set.seed(20200107)
 
 #---- Read in the data ----
 #Need to use HRS data until ADAMS becomes available
@@ -112,61 +113,16 @@ fact_table <- HRS_data %>% dplyr::select("HHIDPN", lkw_dem_vars) %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_") %>%
   mutate("Source" = "LKW") %>% rownames_to_column("FID")
 
-#Initializing Collapsed Gibbs sampler
-set.seed(20200107)
-
 fact_table %<>%
   #Randomly assigning truth labels
   mutate("t_f" = rbinom(n = nrow(fact_table), size = 1, prob = 0.5)) %>%
-  #Figure out which counts to update
-  mutate("count_update" =
+  #Figure out which counts to update... order for numbers: t_f, o_c
+  mutate("init_count" =
            case_when((t_f == Dementia) & t_f == 0 ~ "n00",
                      (t_f == Dementia) & t_f == 1 ~ "n11",
                      (t_f != Dementia) & t_f == 1 ~ "n10",
-                     TRUE ~ "n01"))
-
-
-
-
-
-
-
-
-#---- Try this on Wave 3 ----
-fact_table_W3 <- fact_table %>% filter(str_detect(Entity, "R3"))
-
-#Creating count_table_W3 source names
-count_table_W3_columns <- paste0("LKW", fact_table_W3$FID)
-
-#Initializing count table
-count_table_W3 <- as.data.frame(
-  matrix(0, ncol = nrow(fact_table_W3), nrow = 4)) %>%
-  set_rownames(c("n00", "n01", "n10", "n11")) %>% #order for numbers: t_f, o_c
-  set_colnames(count_table_W3_columns)
-
-for(i in 1:ncol(fact_table)){
- if(fact_table["t_f", i] == fact_table["Dementia", i]){
-   if(fact_table["t_f", i] == 1){
-     count_table["n11", i] = count_table["n11", i] + 1
-   } else{
-     count_table["n00", i] = count_table["n00", i] + 1
-   }
- } else{
-   if(fact_table["t_f", i] == 1){
-     count_table["n10", i] = count_table["n10", i] + 1
-   } else{
-     count_table["n01", i] = count_table["n01", i] + 1
-   }
- }
-}
-
-
-
-
-
-
-
-
+                     TRUE ~ "n01")) %>%
+  unite(source_names, c(Source, FID), sep = "_", remove = FALSE)
 
 
 
