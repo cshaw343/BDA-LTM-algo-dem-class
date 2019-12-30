@@ -21,39 +21,47 @@ collapsed_gibbs <- function(fact_table_entry, source_priors,
   oc <- fact_table_entry$Dementia #Sources truth label
 
   for(run in 1:runs){
-  #Update based on the claim
-  values_table[paste0("p", tf, "_update")] <-
-    (values_table[paste0("p", tf)]*(
-      values_table[paste0("n", tf, oc)] - 1 +
-        source_priors[paste0("alpha", tf, oc)]))/
-    (values_table[paste0("n", tf, "1")] + values_table[paste0("n", tf, 0)] +
-       source_priors[paste0("alpha", tf, 1)] +
-       source_priors[paste0("alpha", tf, 0)])
+    #Initial run was the random draw
+    run = run + 1
+    #Update values based on the claim
+    values_table[paste0("p", tf, "_update")] <-
+      (values_table[paste0("p", tf)]*(
+        values_table[paste0("n", tf, oc)] - 1 +
+          source_priors[paste0("alpha", tf, oc)]))/
+      (values_table[paste0("n", tf, "1")] + values_table[paste0("n", tf, 0)] +
+         source_priors[paste0("alpha", tf, 1)] +
+         source_priors[paste0("alpha", tf, 0)])
 
-  values_table[paste0("p", 1 - tf, "_update")] <-
-    (values_table[paste0("p", 1 - tf)]*(
-      values_table[paste0("n", 1 - tf, oc)] +
-        source_priors[paste0("alpha", 1 - tf, oc)]))/
-    (values_table[paste0("n", 1 - tf, "1")] +
-       values_table[paste0("n", 1 - tf, 0)] +
-       source_priors[paste0("alpha", 1 - tf, 1)] +
-       source_priors[paste0("alpha", 1 - tf, 0)])
+    values_table[paste0("p", 1 - tf, "_update")] <-
+      (values_table[paste0("p", 1 - tf)]*(
+        values_table[paste0("n", 1 - tf, oc)] +
+          source_priors[paste0("alpha", 1 - tf, oc)]))/
+      (values_table[paste0("n", 1 - tf, "1")] +
+         values_table[paste0("n", 1 - tf, 0)] +
+         source_priors[paste0("alpha", 1 - tf, 1)] +
+         source_priors[paste0("alpha", 1 - tf, 0)])
 
-  draw_prob <- values_table[paste0("p", 1 - tf, "_update")]/
-    (values_table[paste0("p", tf, "_update")] +
-       values_table[paste0("p", 1 - tf, "_update")])
+    #Calculate if truth label needs to change
+    draw_prob <- values_table[paste0("p", 1 - tf, "_update")]/
+      (values_table[paste0("p", tf, "_update")] +
+         values_table[paste0("p", 1 - tf, "_update")])
 
-  if(rbinom(n = 1, size = 1, prob = draw_prob) == 1){
-    #Truth label changes
-    tf = 1 - tf
+    if(rbinom(n = 1, size = 1, prob = draw_prob) == 1){
+      #Truth label changes
+      tf = 1 - tf
 
-    #Update counts
-    values_table[paste0("n", 1 - tf, oc)] <-
-      values_table[paste0("n", 1 - tf, oc)] - 1
-    values_table[paste0("n", tf, oc)] <-
-      values_table[paste0("n", tf, oc)] + 1
+      #Update counts
+      values_table[paste0("n", 1 - tf, oc)] <-
+        values_table[paste0("n", 1 - tf, oc)] - 1
+      values_table[paste0("n", tf, oc)] <-
+        values_table[paste0("n", tf, oc)] + 1
+    }
 
+    if(runs > burn_in & runs%%thinning == 0){
+      p_tf1 = p_tf1 + tf/runs
+    }
   }
-  }
+
+  return(p_tf1)
 }
 
