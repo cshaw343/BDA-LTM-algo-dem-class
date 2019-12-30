@@ -2,7 +2,7 @@
 if (!require("pacman"))
   install.packages("pacman", repos='http://cran.us.r-project.org')
 
-p_load("here", "haven", "tidyverse", "magrittr")
+p_load("here", "haven", "tidyverse", "magrittr", "future.apply")
 
 options(scipen = 999)
 set.seed(20200107)
@@ -116,13 +116,15 @@ fact_table <- HRS_data %>% dplyr::select("HHIDPN", lkw_dem_vars) %>%
 fact_table %<>%
   #Randomly assigning truth labels
   mutate("t_f" = rbinom(n = nrow(fact_table), size = 1, prob = 0.5)) %>%
-  #Figure out which counts to update... order for numbers: t_f, o_c
+  #Figure out which counts to initialize... order for numbers: t_f, o_c
   mutate("init_count" =
            case_when((t_f == Dementia) & t_f == 0 ~ "n00",
                      (t_f == Dementia) & t_f == 1 ~ "n11",
                      (t_f != Dementia) & t_f == 1 ~ "n10",
                      TRUE ~ "n01")) %>%
-  unite(source_names, c(Source, FID), sep = "_", remove = FALSE)
+  unite(source_names, c(Source, FID), sep = "_", remove = FALSE) %>%
+  #Column of truth label = 1 probabilities
+  mutate("p_tf1" = 0)
 
 #Specify priors on sources
 #Order: priors on sensitivity, priors on 1 - specificity, priors on truth label
@@ -141,4 +143,10 @@ LKW_priors <- c(sensitivity_pars, specificity_pars, truth_label_pars)
 names(LKW_priors) <- c("alpha11", "alpha10", "alpha01", "alpha00",
                        "beta0","beta1")
 
+#Sample p_tf1 for everyone
+test <- fact_table[1:5, ]
 
+plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
+apply(test, 1, collapsed_gibbs, source_priors)
+
+plan(sequential)                                   #Shut down cluster
