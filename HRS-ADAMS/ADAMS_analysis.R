@@ -138,7 +138,7 @@ specificity_pars <- beta_parameters(mean = 0.021, variance = 0.01)
 truth_label_pars <- beta_parameters(mean = 0.5, variance = 0.05)
 
 LKW_priors <- c(sensitivity_pars, specificity_pars, truth_label_pars)
-names(LKW_priors) <- c("alpha_11", "alpha_10", "alpha_01", "alpha_00", "beta_0",
-                       "beta_1")
+names(LKW_priors) <- c("alpha11", "alpha10", "alpha01", "alpha00",
+                       "beta0","beta1")
 
 
