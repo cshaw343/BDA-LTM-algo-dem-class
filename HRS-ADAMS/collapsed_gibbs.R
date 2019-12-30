@@ -1,10 +1,5 @@
-#temp code
-fact_table_entry <- fact_table[1, ]
-source_priors <- LKW_priors
-
 collapsed_gibbs <- function(fact_table_entry, source_priors,
-                            #set 10x less for testing
-                            burn_in = 10, thinning = 5, runs = 100){
+                            burn_in = 500, thinning = 100, runs = 10000){
 
   #---- Initializing values vector ----
   values_table <- vector(length = 8)
