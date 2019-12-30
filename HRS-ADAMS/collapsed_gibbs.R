@@ -1,19 +1,19 @@
 collapsed_gibbs <- function(fact_table_entry, source_priors,
-                            burn_in = 500, thinning = 100, runs = 10000){
+                            burn_in = 500, thinning = 1000, runs = 100000){
 
   #---- Initializing values vector ----
   values_table <- vector(length = 8)
   names(values_table) <- c("n00", "n01", "n10", "n11", "p0", "p1",
                            "p0_update", "p1_update")
-  values_table[fact_table_entry$init_count] = 1
+  values_table[fact_table_entry["init_count"]] = 1
   values_table["p0"] = source_priors[["beta0"]]
   values_table["p1"] = source_priors[["beta1"]]
 
   p_tf1 <- 0 #Probability that tf = 1
 
   #---- Begin sampling ----
-  tf <- fact_table_entry$t_f      #Initial truth label
-  oc <- fact_table_entry$Dementia #Sources truth label
+  tf <- as.numeric(fact_table_entry["t_f"])      #Initial truth label
+  oc <- as.numeric(fact_table_entry["Dementia"]) #Sources truth label
 
   for(run in 1:runs){
     #Initial run was the random draw
