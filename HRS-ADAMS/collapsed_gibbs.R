@@ -1,20 +1,22 @@
 #temp code
 fact_table_entry <- fact_table[1, ]
-source_priors <-
+source_priors <- LKW_priors
 
 collapsed_gibbs <- function(fact_table_entry, source_priors,
                             #set 10x less for testing
                             burn_in = 10, thinning = 5, runs = 100){
 
   #---- Initializing count vector ----
-  counts <- vector(length = 4)
-  names(counts) <- c("n00", "n01", "n10", "n11")
-  counts[fact_table_entry$init_count] = 1
+  values_table <- vector(length = 6)
+  names(values_table) <- c("n00", "n01", "n10", "n11", "p0", "p1")
+  values_table[fact_table_entry$init_count] = 1
 
   #---- Begin sampling ----
-  #Uninformative priors for the truth label
-  p_tf <- 0.5
-  p_1minustf <- 0.5
+  #Initial truth label
+  tf <- fact_table_entry$t_f
+
+  p_0 <- source_priors[["beta_0"]]
+  p_1 <- source_priors[["beta_1"]]
 
   #Update based on the claim
   p_tf <-
