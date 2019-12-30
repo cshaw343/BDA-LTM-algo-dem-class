@@ -14,12 +14,13 @@ collapsed_gibbs <- function(fact_table_entry, source_priors,
   values_table["p0"] = source_priors[["beta0"]]
   values_table["p1"] = source_priors[["beta1"]]
 
+  p_tf1 <- 0 #Probability that tf = 1
 
   #---- Begin sampling ----
-  #Initial truth label
-  tf <- fact_table_entry$t_f
-  oc <- fact_table_entry$Dementia
+  tf <- fact_table_entry$t_f      #Initial truth label
+  oc <- fact_table_entry$Dementia #Sources truth label
 
+  for(run in 1:runs){
   #Update based on the claim
   values_table[paste0("p", tf, "_update")] <-
     (values_table[paste0("p", tf)]*(
@@ -38,6 +39,21 @@ collapsed_gibbs <- function(fact_table_entry, source_priors,
        source_priors[paste0("alpha", 1 - tf, 1)] +
        source_priors[paste0("alpha", 1 - tf, 0)])
 
-  if(values_table[paste0("p", )])
+  draw_prob <- values_table[paste0("p", 1 - tf, "_update")]/
+    (values_table[paste0("p", tf, "_update")] +
+       values_table[paste0("p", 1 - tf, "_update")])
 
+  if(rbinom(n = 1, size = 1, prob = draw_prob) == 1){
+    #Truth label changes
+    tf = 1 - tf
+
+    #Update counts
+    values_table[paste0("n", 1 - tf, oc)] <-
+      values_table[paste0("n", 1 - tf, oc)] - 1
+    values_table[paste0("n", tf, oc)] <-
+      values_table[paste0("n", tf, oc)] + 1
+
+  }
+  }
 }
+
