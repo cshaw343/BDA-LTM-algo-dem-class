@@ -144,9 +144,8 @@ names(LKW_priors) <- c("alpha11", "alpha10", "alpha01", "alpha00",
                        "beta0","beta1")
 
 #Sample p_tf1 for everyone
-test <- fact_table[1:5, ]
-
 plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
-apply(test, 1, collapsed_gibbs, source_priors)
-
+start <- Sys.time()
+fact_table$p_tf1 <- apply(fact_table, 1, collapsed_gibbs, source_priors)
+finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
