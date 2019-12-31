@@ -111,7 +111,8 @@ lkw_vs_wu <- sens_spec(HRS_data[, lkw_dem_vars], HRS_data[, wu_dem_vars])
 
 #---- BDI-LTM algorithm ----
 #Creating the fact table
-fact_table <- HRS_data %>% dplyr::select("HHIDPN", lkw_dem_vars) %>%
+fact_table <- HRS_data %>%
+  dplyr::select("HHIDPN", lkw_dem_vars) %>%
   pivot_longer(lkw_dem_vars, names_to = "key", values_to = "Dementia") %>%
   na.omit() %>%
   mutate_at("key", ~str_replace(., "LKWDEM", "")) %>%
@@ -130,6 +131,17 @@ fact_table %<>%
   unite(source_names, c(Source, FID), sep = "_", remove = FALSE) %>%
   #Column of truth label = 1 probabilities
   mutate("p_tf1" = 0)
+
+#Creating the gold standard table
+gold_table <- HRS_data %>%
+  dplyr::select("HHIDPN", wu_dem_vars) %>%
+  pivot_longer(wu_dem_vars, names_to = "key", values_to = "gold") %>%
+  na.omit() %>%
+  mutate_at("key", ~str_replace(., "WUDEM", "")) %>%
+  unite(col = "Entity", c("HHIDPN", "key"), sep = "_")
+
+#Merging gold standard data with fact_table
+fact_table <- inner_join(fact_table, gold_table, by = "Entity")
 
 #Specify priors on sources
 #Order: priors on sensitivity, priors on 1 - specificity, priors on truth label
@@ -157,3 +169,6 @@ fact_table_samp100$p_tf1 <- apply(fact_table_samp100, 1,
                                   collapsed_gibbs, LKW_priors)
 finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
+
+#Update t_f based on p(t_f = 1)
+
