@@ -150,8 +150,8 @@ fact_table <- inner_join(fact_table, gold_table, by = "Entity")
 # prior on truth label = c(\beta_0, \beta_1)
 
 #Values based on LKW performance in Melinda and Kan's paper
-sensitivity_pars <- beta_parameters(mean = 0.44, variance = 0.02)
-specificity_pars <- beta_parameters(mean = 0.07, variance = 0.01)
+sensitivity_pars <- beta_parameters(mean = 0.41, variance = 0.02)
+specificity_pars <- beta_parameters(mean = 0.11, variance = 0.01)
 truth_label_pars <- beta_parameters(mean = 0.5, variance = 0.05)
 
 LKW_priors <- c(sensitivity_pars, specificity_pars, truth_label_pars)
@@ -171,4 +171,9 @@ finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
 
 #Update t_f based on p(t_f = 1)
+fact_table_samp100 %<>%
+  mutate("t_f" = case_when(p_tf1 >= 0.5 ~ 1,
+                           TRUE ~ 0))
 
+#Sensitivity and specificity
+results <- sens_spec(fact_table_samp100$t_f, fact_table_samp100$gold)
