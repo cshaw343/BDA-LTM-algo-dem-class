@@ -129,14 +129,12 @@ fact_table %<>%
 #Specify priors on sources
 #Order: priors on sensitivity, priors on 1 - specificity, priors on truth label
 # prior on sensitivity = c(\alpha_{11}, \alpha_{10})
-#                      = parameters based on mean = 0.7303, variance = 0.025
 # prior on 1 - specificity = c(\alpha_{01}, \alpha_{00})
-#                          = parameters based on mean = 0.021, variance = 0.01
 # prior on truth label = c(\beta_0, \beta_1)
-#                      = parameters based on mean = 0.5, variance = 0.05
 
-sensitivity_pars <- beta_parameters(mean = 0.7303, variance = 0.025)
-specificity_pars <- beta_parameters(mean = 0.021, variance = 0.01)
+#Values based on LKW performance in Melinda and Kan's paper
+sensitivity_pars <- beta_parameters(mean = 0.44, variance = 0.02)
+specificity_pars <- beta_parameters(mean = 0.07, variance = 0.01)
 truth_label_pars <- beta_parameters(mean = 0.5, variance = 0.05)
 
 LKW_priors <- c(sensitivity_pars, specificity_pars, truth_label_pars)
