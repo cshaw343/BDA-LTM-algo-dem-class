@@ -147,8 +147,13 @@ names(LKW_priors) <- c("alpha11", "alpha10", "alpha01", "alpha00",
                        "beta0","beta1")
 
 #Sample p_tf1 for everyone
+
+#---- Do analysis on subset ----
+fact_table_samp100 <- sample_n(fact_table, size = 100, replace = FALSE)
+
 plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
 start <- Sys.time()
-fact_table$p_tf1 <- apply(fact_table, 1, collapsed_gibbs, LKW_priors)
+fact_table_samp100$p_tf1 <- apply(fact_table_samp100, 1,
+                                  collapsed_gibbs, LKW_priors)
 finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
