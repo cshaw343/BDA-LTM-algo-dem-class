@@ -7,6 +7,11 @@ p_load("here", "haven", "tidyverse", "magrittr", "future.apply")
 options(scipen = 999)
 set.seed(20200107)
 
+#---- Source scripts ----
+source(here("HRS-ADAMS", "sens_spec.R"))
+source(here("HRS-ADAMS", "beta_parameters.R"))
+source(here("HRS-ADAMS", "collapsed_gibbs.R"))
+
 #---- Read in the data ----
 #Need to use HRS data until ADAMS becomes available
 #number of rows in the dataset to read in
