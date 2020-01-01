@@ -171,17 +171,22 @@ IADL_sensitivity_pars <- beta_parameters(mean = 0.94, variance = 0.01)
 IADL_specificity_pars <- beta_parameters(mean = 0.29, variance = 0.02)
 IADL_truth_label_pars <- beta_parameters(mean = 0.5, variance = 0.05)
 
-source_priors <- rbind(
-  c("LKW",
-    LKW_sensitivity_pars, LKW_specificity_pars, LKW_truth_label_pars),
-  c("IADL",
-    IADL_sensitivity_pars, IADL_specificity_pars, IADL_truth_label_pars)) %>%
-  as.data.frame()
+#Making source prior table
+source_priors <- as.data.frame(matrix(nrow = 2, ncol = 7)) %>%
+  set_colnames(c("Source", "alpha11", "alpha10", "alpha01", "alpha00", "beta0",
+                 "beta1")) %>%
+  mutate("Source" = c("LKW", "IADL"))
 
-colnames(source_priors) <-
-  c("Source", "alpha11", "alpha10", "alpha01", "alpha00", "beta0","beta1")
+source_priors[1, colnames(source_priors)[-1]] <-
+  c(LKW_sensitivity_pars, LKW_specificity_pars, LKW_truth_label_pars)
+source_priors[2, colnames(source_priors)[-1]] <-
+  c(IADL_sensitivity_pars, IADL_specificity_pars, IADL_truth_label_pars)
 
 
+
+
+
+test <- apply(fact_table[1:2, ], 1, collapsed_gibbs, source_priors)
 
 
 
