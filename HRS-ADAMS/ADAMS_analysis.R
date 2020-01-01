@@ -69,7 +69,7 @@ Wu_algorithm %<>% unite("HHIDPN", c("HHID", "PN"), sep = "")
 HRS_data <- inner_join(HRS_data, Wu_algorithm, by = "HHIDPN")
 
 #---- L-K-W summary scores and classification ----
-#Classify individual as having dementia if summary score <= 6
+#Classify individual as having dementia if LKW summary score <= 6
 #(Crimmins et al 2011)
 lkw_scores_vars <- paste0("R", waves, "LKWSCORE")
 lkw_dem_vars <- paste0("R", waves, "LKWDEM")
@@ -84,6 +84,20 @@ for(i in 1:length(lkw_scores_vars)){
   vars <- c(word_recall_vars[i], serial7_vars[i], backwards_count_vars[i])
   HRS_data[, lkw_scores_vars[i]] = rowSums(HRS_data[, vars])
   HRS_data[, lkw_dem_vars[i]] = (HRS_data[, lkw_scores_vars[i]] <= 6)*1
+}
+
+#---- IADL classification ----
+#Classify individual as having dementia if IADL summary score > 0
+#(Barberger-Gateau et al 1992)
+IADL_dem_vars <- paste0("R", waves, "IADLDEM")
+
+HRS_data %<>% cbind(as.data.frame(matrix(nrow = nrow(HRS_data),
+                                         ncol = length(IADL_dem_vars))))
+
+colnames(HRS_data)[(ncol(HRS_data) - 9):ncol(HRS_data)] <- dput(IADL_dem_vars)
+
+for(i in 1:length(IADL_dem_vars)){
+  HRS_data[, IADL_dem_vars[i]] = (HRS_data[, IADL_summary_vars[i]] > 0)*1
 }
 
 #---- Wu classification ----
