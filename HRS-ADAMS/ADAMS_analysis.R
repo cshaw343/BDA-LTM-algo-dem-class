@@ -42,9 +42,9 @@ HRS_data <- read_sas(here(
   mutate_at("HHIDPN", as.character)
 
 #---- Remove people missing ALL test scores ----
-#Removes 8376 people (42053 --> 33677)
+#Removes 6835 people (42053 --> 35218)
 HRS_data$num_missing <- rowSums(is.na(HRS_data[, -1]))
-HRS_data$missing_all <- (HRS_data$num_missing == 30)*1
+HRS_data$missing_all <- (HRS_data$num_missing == 40)*1
 HRS_data %<>% filter(missing_all == 0)
 
 #---- Remove people missing ALL Wu dementia probabilities ----
