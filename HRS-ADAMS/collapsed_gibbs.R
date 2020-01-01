@@ -2,7 +2,8 @@ collapsed_gibbs <- function(fact_table_entry, source_priors_table,
                             burn_in = 500, thinning = 1000, runs = 100000){
 
   #---- Identify correct priors ----
-  source_priors <- source_priors_table[fact_table_entry["Source"], ]
+  source_priors <- source_priors_table[
+    which(source_priors_table$Source == fact_table_entry["Source"]), ]
 
   #---- Initializing values vector ----
   values_table <- vector(length = 8)
