@@ -197,7 +197,8 @@ fact_table_samp <- fact_table[which(fact_table$Entity %in% people_in_sample), ]
 plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
 start <- Sys.time()
 fact_table_samp$p_tf1 <- apply(fact_table_samp, 1,
-                               collapsed_gibbs, source_priors)
+                               collapsed_gibbs, source_priors,
+                               thinning = 100, runs = 10000)
 finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
 
