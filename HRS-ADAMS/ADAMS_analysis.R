@@ -138,7 +138,7 @@ fact_table <- HRS_data %>%
   na.omit() %>%
   mutate("Source" = case_when(str_detect(key, "LKW") ~ "LKW",
                               TRUE ~ "IADL")) %>%
-  mutate_at("key", ~str_sub(., end = 2)) %>%
+  mutate_at("key", ~sub("(\\d)[^0-9]+$", "\\1", .)) %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_") %>%
   rownames_to_column("FID")
 
@@ -191,16 +191,17 @@ gold_table <- HRS_data %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_")
 
 #---- Do analysis on subset ----
-fact_table_samp100 <- sample_n(fact_table, size = 100, replace = FALSE)
+people_in_sample <- sample(fact_table$Entity, size = 100, replace = FALSE)
+fact_table_samp <- fact_table[which(fact_table$Entity %in% people_in_sample), ]
 
 plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
 start <- Sys.time()
 fact_table_samp100$p_tf1 <- apply(fact_table_samp100, 1,
-                                  collapsed_gibbs, LKW_priors)
+                                  collapsed_gibbs, source_priors)
 finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
 
-#Update t_f based on p(t_f = 1)
+#Update t_f based on expected p(t_f = 1)
 fact_table_samp100 %<>%
   mutate("t_f" = case_when(p_tf1 >= 0.5 ~ 1,
                            TRUE ~ 0))
