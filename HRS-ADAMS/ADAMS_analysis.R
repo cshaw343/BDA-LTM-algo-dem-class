@@ -60,7 +60,7 @@ Wu_algorithm$missing_all_probs <-
 Wu_algorithm %<>% filter(missing_all_probs == 0)
 
 #---- Remove those who don't appear in Wu algorithm data ----
-#Removes 4453 people (33677 --> 29224)
+#Removes 4809 people (35218 --> 30409)
 #Create HHIDPN variable for Wu data
 Wu_algorithm$HHID = str_remove(Wu_algorithm$HHID, "^0+")
 Wu_algorithm %<>% unite("HHIDPN", c("HHID", "PN"), sep = "")
