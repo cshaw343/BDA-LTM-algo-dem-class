@@ -136,8 +136,8 @@ fact_table <- HRS_data %>%
   pivot_longer(c(lkw_dem_vars, IADL_dem_vars), names_to = "key",
                values_to = "Dementia") %>%
   na.omit() %>%
-  mutate("Source" = str_extract(key, "(?<=\\d).*$")) %>%
-  mutate_at("Source", ~str_sub(., end = -4)) %>%
+  mutate("Source" = case_when(str_detect(key, "LKW") ~ "LKW",
+                              TRUE ~ "IADL")) %>%
   mutate_at("key", ~str_sub(., end = 2)) %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_") %>%
   rownames_to_column("FID")
