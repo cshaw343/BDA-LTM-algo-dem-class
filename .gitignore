@@ -10,5 +10,4 @@ Data/*
 
 #---- Files to ignore ----
 TEMP
-
 Visualizations/*.png
