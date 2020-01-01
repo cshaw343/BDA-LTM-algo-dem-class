@@ -155,6 +155,32 @@ fact_table %<>%
   #Column of truth label = 1 probabilities
   mutate("p_tf1" = 0)
 
+#Specify priors on sources
+#Order: priors on sensitivity, priors on 1 - specificity, priors on truth label
+# prior on sensitivity = c(\alpha_{11}, \alpha_{10})
+# prior on 1 - specificity = c(\alpha_{01}, \alpha_{00})
+# prior on truth label = c(\beta_0, \beta_1)
+
+#Values based on LKW performance in Melinda and Kan's paper
+LKW_sensitivity_pars <- beta_parameters(mean = 0.41, variance = 0.02)
+LKW_specificity_pars <- beta_parameters(mean = 0.11, variance = 0.01)
+LKW_truth_label_pars <- beta_parameters(mean = 0.5, variance = 0.05)
+
+#Values based on 4-item IADL from (Barberger-Gateau et al 1992)
+IADL_sensitivity_pars <- beta_parameters(mean = 0.94, variance = 0.01)
+IADL_specificity_pars <- beta_parameters(mean = 0.29, variance = 0.02)
+IADL_truth_label_pars <- beta_parameters(mean = 0.5, variance = 0.05)
+
+source_priors <- rbind(
+  c("LKW",
+    LKW_sensitivity_pars, LKW_specificity_pars, LKW_truth_label_pars),
+  c("IADL",
+    IADL_sensitivity_pars, IADL_specificity_pars, IADL_truth_label_pars)) %>%
+  as.data.frame()
+
+colnames(source_priors) <-
+  c("Source", "alpha11", "alpha10", "alpha01", "alpha00", "beta0","beta1")
+
 
 
 
@@ -172,20 +198,7 @@ gold_table <- HRS_data %>%
 #Merging gold standard data with fact_table
 fact_table <- inner_join(fact_table, gold_table, by = "Entity")
 
-#Specify priors on sources
-#Order: priors on sensitivity, priors on 1 - specificity, priors on truth label
-# prior on sensitivity = c(\alpha_{11}, \alpha_{10})
-# prior on 1 - specificity = c(\alpha_{01}, \alpha_{00})
-# prior on truth label = c(\beta_0, \beta_1)
 
-#Values based on LKW performance in Melinda and Kan's paper
-sensitivity_pars <- beta_parameters(mean = 0.41, variance = 0.02)
-specificity_pars <- beta_parameters(mean = 0.11, variance = 0.01)
-truth_label_pars <- beta_parameters(mean = 0.5, variance = 0.05)
-
-LKW_priors <- c(sensitivity_pars, specificity_pars, truth_label_pars)
-names(LKW_priors) <- c("alpha11", "alpha10", "alpha01", "alpha00",
-                       "beta0","beta1")
 
 #Sample p_tf1 for everyone
 
