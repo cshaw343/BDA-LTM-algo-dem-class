@@ -210,11 +210,14 @@ fact_table_unique <-
 
 #Update t_f based on expected p(t_f = 1)
 for(i in 1:nrow(fact_table_unique)){
+  rows <- which(fact_table_samp[, "Entity"] == fact_table_unique[i, "Entity"])
+  mean_t_f <- colMeans((fact_table_samp[rows, "p_tf1"]))
 
+  fact_table_unique[i, "t_f"] = (mean_t_f >= 0.5)*1
 }
 
 #Merging gold standard data with fact_table
-fact_table <- inner_join(fact_table, gold_table, by = "Entity")
+fact_table_unique <- inner_join(fact_table_unique, gold_table, by = "Entity")
 
 #Sensitivity and specificity
-results <- sens_spec(fact_table_samp100$t_f, fact_table_samp100$gold)
+results <- sens_spec(fact_table_unique$t_f, fact_table_unique$gold)
