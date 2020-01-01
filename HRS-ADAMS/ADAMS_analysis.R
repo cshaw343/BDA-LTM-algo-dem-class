@@ -125,6 +125,10 @@ for(i in 1:length(wu_dem_vars)){
 #Can only consider those with directly measured cognitive assessments for now
 lkw_vs_wu <- sens_spec(HRS_data[, lkw_dem_vars], HRS_data[, wu_dem_vars])
 
+#---- Sensitivity/Specificity IADLs vs. Wu ----
+#Can only consider those with directly measured IADLs for now
+IADL_vs_wu <- sens_spec(HRS_data[, IADL_dem_vars], HRS_data[, wu_dem_vars])
+
 #---- BDI-LTM algorithm ----
 #Creating the fact table
 fact_table <- HRS_data %>%
