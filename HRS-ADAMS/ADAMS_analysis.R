@@ -132,12 +132,15 @@ IADL_vs_wu <- sens_spec(HRS_data[, IADL_dem_vars], HRS_data[, wu_dem_vars])
 #---- BDI-LTM algorithm ----
 #Creating the fact table
 fact_table <- HRS_data %>%
-  dplyr::select("HHIDPN", lkw_dem_vars) %>%
-  pivot_longer(lkw_dem_vars, names_to = "key", values_to = "Dementia") %>%
+  dplyr::select("HHIDPN", lkw_dem_vars, IADL_dem_vars) %>%
+  pivot_longer(c(lkw_dem_vars, IADL_dem_vars), names_to = "key",
+               values_to = "Dementia") %>%
   na.omit() %>%
-  mutate_at("key", ~str_replace(., "LKWDEM", "")) %>%
+  mutate("Source" = str_extract(key, "(?<=\\d).*$")) %>%
+  mutate_at("Source", ~str_sub(., end = -4)) %>%
+  mutate_at("key", ~str_sub(., end = 2)) %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_") %>%
-  mutate("Source" = "LKW") %>% rownames_to_column("FID")
+  rownames_to_column("FID")
 
 fact_table %<>%
   #Randomly assigning truth labels
@@ -151,6 +154,12 @@ fact_table %<>%
   unite(source_names, c(Source, FID), sep = "_", remove = FALSE) %>%
   #Column of truth label = 1 probabilities
   mutate("p_tf1" = 0)
+
+
+
+
+
+
 
 #Creating the gold standard table
 gold_table <- HRS_data %>%
