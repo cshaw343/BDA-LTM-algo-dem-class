@@ -182,16 +182,6 @@ source_priors[1, colnames(source_priors)[-1]] <-
 source_priors[2, colnames(source_priors)[-1]] <-
   c(IADL_sensitivity_pars, IADL_specificity_pars, IADL_truth_label_pars)
 
-
-
-
-
-test <- apply(fact_table[1:2, ], 1, collapsed_gibbs, source_priors)
-
-
-
-
-
 #Creating the gold standard table
 gold_table <- HRS_data %>%
   dplyr::select("HHIDPN", wu_dem_vars) %>%
@@ -199,13 +189,6 @@ gold_table <- HRS_data %>%
   na.omit() %>%
   mutate_at("key", ~str_replace(., "WUDEM", "")) %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_")
-
-#Merging gold standard data with fact_table
-fact_table <- inner_join(fact_table, gold_table, by = "Entity")
-
-
-
-#Sample p_tf1 for everyone
 
 #---- Do analysis on subset ----
 fact_table_samp100 <- sample_n(fact_table, size = 100, replace = FALSE)
@@ -221,6 +204,9 @@ plan(sequential)                                   #Shut down cluster
 fact_table_samp100 %<>%
   mutate("t_f" = case_when(p_tf1 >= 0.5 ~ 1,
                            TRUE ~ 0))
+
+#Merging gold standard data with fact_table
+fact_table <- inner_join(fact_table, gold_table, by = "Entity")
 
 #Sensitivity and specificity
 results <- sens_spec(fact_table_samp100$t_f, fact_table_samp100$gold)
