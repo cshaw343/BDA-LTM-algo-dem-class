@@ -25,14 +25,16 @@ Wu_algorithm <- read_sas(here(
   n_max = n_max)
 
 #list of variables to read in from HRS data:
-  # ID, total word recall, serial7, backward counting
+  # ID, total word recall, serial7, backward counting, IADL summary
 #stop at Wave 12 because that's all I have from RAND
 waves <- seq(from = 3, to = 12, by = 1)
 word_recall_vars <- paste0("R", waves, "TR20")
 serial7_vars <- paste0("R", waves, "SER7")
 backwards_count_vars <- paste0("R", waves, "BWC20")
+IADL_summary_vars <- paste0("R", waves, "IADLA")
 
-vars = c("HHIDPN", word_recall_vars, serial7_vars, backwards_count_vars)
+vars = c("HHIDPN", word_recall_vars, serial7_vars, backwards_count_vars,
+         IADL_summary_vars)
 
 HRS_data <- read_sas(here(
   "Data", "randhrs1992_2016v1_SAS_data", "randhrs1992_2016v1.sas7bdat"),
