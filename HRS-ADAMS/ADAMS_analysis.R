@@ -191,20 +191,27 @@ gold_table <- HRS_data %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_")
 
 #---- Do analysis on subset ----
-people_in_sample <- sample(fact_table$Entity, size = 100, replace = FALSE)
+people_in_sample <- sample(fact_table$Entity, size = 55, replace = FALSE)
 fact_table_samp <- fact_table[which(fact_table$Entity %in% people_in_sample), ]
 
 plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
 start <- Sys.time()
-fact_table_samp100$p_tf1 <- apply(fact_table_samp100, 1,
-                                  collapsed_gibbs, source_priors)
+fact_table_samp$p_tf1 <- apply(fact_table_samp, 1,
+                               collapsed_gibbs, source_priors)
 finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
 
+#Create a unique fact table
+fact_table_unique <-
+  as.data.frame(matrix(ncol = 2,
+                       nrow = length(unique(fact_table_samp$Entity)))) %>%
+  set_colnames(c("Entity", "t_f")) %>%
+  mutate("Entity" = unique(fact_table_samp$Entity))
+
 #Update t_f based on expected p(t_f = 1)
-fact_table_samp100 %<>%
-  mutate("t_f" = case_when(p_tf1 >= 0.5 ~ 1,
-                           TRUE ~ 0))
+for(i in 1:nrow(fact_table_unique)){
+
+}
 
 #Merging gold standard data with fact_table
 fact_table <- inner_join(fact_table, gold_table, by = "Entity")
