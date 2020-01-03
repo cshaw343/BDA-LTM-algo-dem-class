@@ -191,7 +191,7 @@ gold_table <- HRS_data %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_")
 
 #---- Do analysis on subset ----
-people_in_sample <- sample(fact_table$Entity, size = 10000, replace = FALSE)
+people_in_sample <- sample(fact_table$Entity, size = 25000, replace = FALSE)
 fact_table_samp <- fact_table[which(fact_table$Entity %in% people_in_sample), ]
 
 plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
