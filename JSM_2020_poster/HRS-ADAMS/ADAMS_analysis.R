@@ -2,27 +2,23 @@
 if (!require("pacman"))
   install.packages("pacman", repos='http://cran.us.r-project.org')
 
-p_load("here", "haven", "tidyverse", "magrittr", "future.apply")
+p_load("here", "tidyverse", "magrittr", "future.apply", "readr")
 
 options(scipen = 999)
 set.seed(20200107)
 
 #---- Source scripts ----
-source(here("HRS-ADAMS", "sens_spec.R"))
-source(here("HRS-ADAMS", "beta_parameters.R"))
-source(here("HRS-ADAMS", "collapsed_gibbs.R"))
+source(here("RScripts", "sens_spec.R"))
+source(here("RScripts", "beta_parameters.R"))
+source(here("RScripts", "collapsed_gibbs.R"))
+source(here("RScripts", "get_ADAMS_demdx.R"))
 
 #---- Read in the data ----
-#Need to use HRS data until ADAMS becomes available
-#number of rows in the dataset to read in
-n_max = Inf
+ADAMS_A <- get_ADAMS_demdx("A")
 
-#Read in imputed scores from Wu logit algorithm... temporary gold standard
-#These imputed scores start in Wave 3
-#If predicted dementia probability >= 0.5, classify as demented
-Wu_algorithm <- read_sas(here(
-  "Data", "Wu_logit_HRS_imputed_mem_scores", "dpmemimp_aug2018.sas7bdat"),
-  n_max = n_max)
+
+
+#Get rid of people with 97 as staging score (can't find this in the data dict)
 
 #list of variables to read in from HRS data:
   # ID, total word recall, serial7, backward counting, IADL summary
