@@ -47,5 +47,5 @@ get_ADAMS_demdx <- function(wave){
   #Add wave variable
   df[, "wave"] <- toupper(wave)
 
-  return(df[, c("HHID", "PN", "ADCDRSTG", "wave")])
+  return(df[, c("HHID", "PN", paste0(toupper(wave), "DCDRSTG"), "wave")])
 }
