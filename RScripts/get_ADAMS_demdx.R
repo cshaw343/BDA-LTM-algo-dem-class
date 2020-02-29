@@ -47,5 +47,17 @@ get_ADAMS_demdx <- function(wave){
   #Add wave variable
   df[, "wave"] <- toupper(wave)
 
-  return(df[, c("HHID", "PN", paste0(toupper(wave), "DCDRSTG"), "wave")])
+  #Assign dementia for staging values greater than 1... from the ADAMS codebook:
+  #0: No dementia
+  #0.5: Questionable/very mild dementia
+  #1-5: Increasing severity of dementia
+  #I'm leaving in the values of 97 in Wave A because I can't find anywhere in
+  #the codebook that this means anything other than severe dementia
+
+  df[, "dem"] <- as.numeric(
+    ifelse(df[, paste0(toupper(wave), "DCDRSTG")] >= 1, 1, 0))
+
+
+
+  return(df[, c("HHID", "PN", paste0(toupper(wave), "DCDRSTG"), "dem", "wave")])
 }
