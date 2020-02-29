@@ -13,12 +13,13 @@ source(here("RScripts", "beta_parameters.R"))
 source(here("RScripts", "collapsed_gibbs.R"))
 source(here("RScripts", "get_ADAMS_demdx.R"))
 
-#---- Read in the data ----
-ADAMS_A <- get_ADAMS_demdx("A")
+#---- Read in the ADAMS data ----
+ADAMS_waves <- c("A", "B", "C", "D")
 
+for(waves in ADAMS_waves){
+  assign(paste0("ADAMS_", waves), get_ADAMS_demdx(waves))
+}
 
-
-#Get rid of people with 97 as staging score (can't find this in the data dict)
 
 #list of variables to read in from HRS data:
   # ID, total word recall, serial7, backward counting, IADL summary
