@@ -1,4 +1,5 @@
 get_ADAMS_demdx <- function(wave){
+
   #take the lowercase of the input (for filenames)
   wave <- tolower(wave)
 
@@ -56,8 +57,6 @@ get_ADAMS_demdx <- function(wave){
 
   df[, "dem"] <- as.numeric(
     ifelse(df[, paste0(toupper(wave), "DCDRSTG")] >= 1, 1, 0))
-
-
 
   return(df[, c("HHID", "PN", paste0(toupper(wave), "DCDRSTG"), "dem", "wave")])
 }
