@@ -12,7 +12,7 @@ source(here("RScripts", "sens_spec.R"))
 source(here("RScripts", "beta_parameters.R"))
 source(here("RScripts", "collapsed_gibbs.R"))
 source(here("RScripts", "get_ADAMS_demdx.R"))
-
+source(here("RScripts", "get_ADAMS_tracker.R"))
 #---- Read in the ADAMS data ----
 ADAMS_waves <- c("A", "B", "C", "D")
 
