@@ -2,7 +2,7 @@
 if (!require("pacman"))
   install.packages("pacman", repos='http://cran.us.r-project.org')
 
-p_load("here", "tidyverse", "magrittr", "future.apply", "readr")
+p_load("here", "tidyverse", "magrittr", "future.apply", "readr", "haven")
 
 options(scipen = 999)
 set.seed(20200107)
@@ -33,9 +33,10 @@ IADL_summary_vars <- paste0("R", waves, "IADLA")
 vars = c("HHIDPN", word_recall_vars, serial7_vars, backwards_count_vars,
          IADL_summary_vars)
 
-HRS_data <- read_sas(here(
-  "Data", "randhrs1992_2016v1_SAS_data", "randhrs1992_2016v1.sas7bdat"),
-  n_max = n_max, col_select = vars) %>%
+HRS_data <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
+                            "HRS/HRS RAND/randhrs1992_2016v1_SAS_data/",
+                            "randhrs1992_2016v1.sas7bdat"),
+                     n_max = Inf, col_select = vars) %>%
   mutate_at("HHIDPN", as.character)
 
 #---- Remove people missing ALL test scores ----
