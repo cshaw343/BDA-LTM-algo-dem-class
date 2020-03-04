@@ -2,7 +2,8 @@
 if (!require("pacman"))
   install.packages("pacman", repos='http://cran.us.r-project.org')
 
-p_load("here", "tidyverse", "magrittr", "future.apply", "readr", "haven")
+p_load("here", "tidyverse", "magrittr", "future.apply", "readr", "haven",
+       "lubridate")
 
 options(scipen = 999)
 set.seed(20200107)
@@ -13,6 +14,10 @@ source(here("RScripts", "beta_parameters.R"))
 source(here("RScripts", "collapsed_gibbs.R"))
 source(here("RScripts", "get_ADAMS_demdx.R"))
 source(here("RScripts", "get_ADAMS_tracker.R"))
+
+#---- Pull ADAMS interview year from tracker file ----
+ADAMS_year <- adams_tracker %>% dplyr::select(c("HHIDPN", contains("YEAR")))
+
 #---- Read in the ADAMS data ----
 ADAMS_waves <- c("A", "B", "C", "D")
 
@@ -20,18 +25,20 @@ for(waves in ADAMS_waves){
   assign(paste0("ADAMS_", waves), get_ADAMS_demdx(waves))
 }
 
-
+#---- Read in the HRS data ----
 #list of variables to read in from HRS data:
-  # ID, total word recall, serial7, backward counting, IADL summary
+  # ID, total word recall, serial7, backward counting, IADL summary,
+  # interview end date
 #stop at Wave 12 because that's all I have from RAND
 waves <- seq(from = 3, to = 12, by = 1)
 word_recall_vars <- paste0("R", waves, "TR20")
 serial7_vars <- paste0("R", waves, "SER7")
 backwards_count_vars <- paste0("R", waves, "BWC20")
 IADL_summary_vars <- paste0("R", waves, "IADLA")
+interview_end_date_vars <- paste0("R", waves, "IWEND")
 
 vars = c("HHIDPN", word_recall_vars, serial7_vars, backwards_count_vars,
-         IADL_summary_vars)
+         IADL_summary_vars, interview_end_date_vars)
 
 HRS_data <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
                             "HRS/HRS RAND/randhrs1992_2016v1_SAS_data/",
@@ -39,31 +46,19 @@ HRS_data <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
                      n_max = Inf, col_select = vars) %>%
   mutate_at("HHIDPN", as.character)
 
+#Format interview end date so we can get the year
+HRS_data %<>% mutate_at(interview_end_date_vars,
+                        ~year(as.Date(., origin = "1960-01-01")))
+
 #---- Remove people missing ALL test scores ----
 #Removes 6835 people (42053 --> 35218)
 HRS_data$num_missing <- rowSums(is.na(HRS_data[, -1]))
 HRS_data$missing_all <- (HRS_data$num_missing == 40)*1
 HRS_data %<>% filter(missing_all == 0)
 
-#---- Remove people missing ALL Wu dementia probabilities ----
-#Removes 3621 people (34032 --> 30411)
-#Don't count the last variable because we are not using Wave 13
-wu_demprobs_vars <- head(colnames(Wu_algorithm)[which(
-  str_detect(colnames(Wu_algorithm), "dementpimp", negate = FALSE))], -1)
-
-Wu_algorithm$num_missing_probs <-
-  rowSums(is.na(Wu_algorithm[, wu_demprobs_vars]))
-Wu_algorithm$missing_all_probs <-
-  (Wu_algorithm$num_missing_probs == length(wu_demprobs_vars))*1
-Wu_algorithm %<>% filter(missing_all_probs == 0)
-
-#---- Remove those who don't appear in Wu algorithm data ----
+#---- Remove those who don't appear in ADAMS ----
 #Removes 4809 people (35218 --> 30409)
-#Create HHIDPN variable for Wu data
-Wu_algorithm$HHID = str_remove(Wu_algorithm$HHID, "^0+")
-Wu_algorithm %<>% unite("HHIDPN", c("HHID", "PN"), sep = "")
-
-#Inner join the data (only keeps those in HRS_data that appear in Wu_algorithm)
+#Inner join the data (only keeps those in HRS_data that appear in ADAMS)
 HRS_data <- inner_join(HRS_data, Wu_algorithm, by = "HHIDPN")
 
 #---- L-K-W summary scores and classification ----
