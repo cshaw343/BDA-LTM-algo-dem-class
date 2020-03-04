@@ -105,15 +105,26 @@ for(i in 1:length(IADL_dem_vars)){
   HRS_data[, IADL_dem_vars[i]] = (HRS_data[, IADL_summary_vars[i]] > 0)*1
 }
 
+#---- Add columns for LKW and IADL class by ADAMS wave ----
+lkw_ADAMS_varnames <- paste0("lkw_", ADAMS_waves)
+IADL_ADAMS_varnames <- paste0("IADL_", ADAMS_waves)
+HRS_data %<>%
+  cbind(as.data.frame(matrix(nrow = nrow(HRS_data), ncol = 8)) %>%
+          set_colnames(c(lkw_ADAMS_varnames, IADL_ADAMS_varnames)))
+
 #---- Grab the appropriate HRS years ----
 View(HRS_data[, c("HHIDPN", interview_end_date_vars,
                   paste0(ADAMS_waves, "YEAR"))])
 
-HRS_data <- t(HRS_data) %>% as.data.frame()
-for(i in 1:nrow(HRS_data)){
-  ADAMS_dates <- HRS_data[i, paste0(ADAMS_waves, "YEAR")]
-  HRS_dates <- HRS_data[i, interview_end_date_vars]
-  index <- max(which(as.numeric(ADAMS_dates[1]) - HRS_dates > 0))
+HRS_data <- t(HRS_data)
+
+for(i in 1:ncol(HRS_data)){
+  ADAMS_dates <- as.numeric(HRS_data[paste0(ADAMS_waves, "YEAR"), i])
+  HRS_dates <- as.numeric(HRS_data[interview_end_date_vars, i])
+  for(i in 1:length(ADAMS_dates)){
+    HRS_waves <- max(which(ADAMS_dates[1] - HRS_dates > 0))
+  }
+
 }
 
 #---- Sensitivity/Specificity LKW vs. ADAMS ----
