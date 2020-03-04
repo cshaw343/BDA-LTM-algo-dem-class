@@ -110,26 +110,34 @@ lkw_ADAMS_varnames <- paste0("lkw_", ADAMS_waves)
 IADL_ADAMS_varnames <- paste0("IADL_", ADAMS_waves)
 HRS_data %<>%
   cbind(as.data.frame(matrix(nrow = nrow(HRS_data), ncol = 8)) %>%
-          set_colnames(c(lkw_ADAMS_varnames, IADL_ADAMS_varnames)))
+          set_colnames(c(lkw_ADAMS_varnames, IADL_ADAMS_varnames))) %>%
+  mutate_at("HHIDPN", as.numeric)
 
 #---- Grab the appropriate HRS years ----
-View(HRS_data[, c("HHIDPN", interview_end_date_vars,
-                  paste0(ADAMS_waves, "YEAR"))])
-
+#Do computations along columns for efficiency
 HRS_data <- t(HRS_data)
 
 for(i in 1:ncol(HRS_data)){
   ADAMS_dates <- as.numeric(HRS_data[paste0(ADAMS_waves, "YEAR"), i])
   HRS_dates <- as.numeric(HRS_data[interview_end_date_vars, i])
-  for(i in 1:length(ADAMS_dates)){
-    HRS_waves <- max(which(ADAMS_dates[1] - HRS_dates > 0))
+  for(j in 1:length(ADAMS_dates)){
+    if(is.na(ADAMS_dates[j])){next}
+    else{
+      HRS_wave <- max(which(ADAMS_dates[j] - HRS_dates > 0)) + 2
+      HRS_data[paste0("lkw_", ADAMS_waves[j]), i] <-
+        HRS_data[paste0("R", HRS_wave, "LKWDEM"), i]
+      HRS_data[paste0("IADL_", ADAMS_waves[j]), i] <-
+        HRS_data[paste0("R", HRS_wave, "IADLDEM"), i]
+    }
   }
-
 }
+
+HRS_data <- t(HRS_data) %>% as.data.frame()
 
 #---- Sensitivity/Specificity LKW vs. ADAMS ----
 #Can only consider those with directly measured cognitive assessments for now
-lkw_vs_ADAMS <- sens_spec(HRS_data[, lkw_dem_vars], HRS_data[, wu_dem_vars])
+lkw_vs_ADAMS <- sens_spec(HRS_data[, lkw_ADAMS_varnames],
+                          HRS_data[, paste0("dem_", ADAMS_waves)])
 
 #---- Sensitivity/Specificity IADLs vs. ADAMS ----
 #Can only consider those with directly measured IADLs for now
