@@ -1,22 +1,23 @@
 #---- Package Loading, Options, and Seed Setting ----
-if (!require("pacman"))
+if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 
 p_load("here", "tidyverse", "magrittr", "future.apply", "readr", "haven",
        "lubridate")
-
+}
 options(scipen = 999)
 set.seed(20200107)
 
 #---- Source scripts ----
-source(here("RScripts", "sens_spec.R"))
-source(here("RScripts", "beta_parameters.R"))
-source(here("RScripts", "collapsed_gibbs.R"))
-source(here("RScripts", "get_ADAMS_demdx.R"))
-source(here("RScripts", "get_ADAMS_tracker.R"))
+source(here::here("RScripts", "sens_spec.R"))
+source(here::here("RScripts", "beta_parameters.R"))
+source(here::here("RScripts", "collapsed_gibbs.R"))
+source(here::here("RScripts", "get_ADAMS_demdx.R"))
+source(here::here("RScripts", "get_ADAMS_tracker.R"))
 
 #---- Pull ADAMS interview year from tracker file ----
-ADAMS_year <- adams_tracker %>% dplyr::select(c("HHIDPN", contains("YEAR")))
+ADAMS_year <- adams_tracker %>%
+  dplyr::select(c("HHIDPN", contains("YEAR")))
 
 #---- Read in the ADAMS data ----
 ADAMS_waves <- c("A", "B", "C", "D")
@@ -50,16 +51,26 @@ HRS_data <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
 HRS_data %<>% mutate_at(interview_end_date_vars,
                         ~year(as.Date(., origin = "1960-01-01")))
 
+#---- Remove those who don't appear in ADAMS ----
+#Removes 40543 people (42053 --> 1510)
+#Inner join the data (only keeps those in HRS_data that appear in ADAMS)
+HRS_data <- inner_join(HRS_data, ADAMS_year, by = "HHIDPN")
+
 #---- Remove people missing ALL test scores ----
-#Removes 6835 people (42053 --> 35218)
-HRS_data$num_missing <- rowSums(is.na(HRS_data[, -1]))
+#Removes 0 people (1510 --> 1510)
+HRS_data$num_missing <-
+  rowSums(is.na(
+    HRS_data[, c(word_recall_vars, serial7_vars, backwards_count_vars,
+                 IADL_summary_vars)]))
 HRS_data$missing_all <- (HRS_data$num_missing == 40)*1
 HRS_data %<>% filter(missing_all == 0)
 
-#---- Remove those who don't appear in ADAMS ----
-#Removes 4809 people (35218 --> 30409)
-#Inner join the data (only keeps those in HRS_data that appear in ADAMS)
-HRS_data <- inner_join(HRS_data, Wu_algorithm, by = "HHIDPN")
+#---- Join with ADAMS dem data ----
+HRS_data %<>%
+  left_join(ADAMS_A, by = "HHIDPN") %>%
+  left_join(ADAMS_B, by = "HHIDPN") %>%
+  left_join(ADAMS_C, by = "HHIDPN") %>%
+  left_join(ADAMS_D, by = "HHIDPN")
 
 #---- L-K-W summary scores and classification ----
 #Classify individual as having dementia if LKW summary score <= 6
@@ -93,34 +104,24 @@ for(i in 1:length(IADL_dem_vars)){
   HRS_data[, IADL_dem_vars[i]] = (HRS_data[, IADL_summary_vars[i]] > 0)*1
 }
 
-#---- Wu classification ----
-wu_dem_vars <- paste0("R", waves, "WUDEM")
-wu_demprobs_vars <- colnames(HRS_data)[which(
-  str_detect(colnames(HRS_data), "dementpimp", negate = FALSE))]
+#---- Grab the appropriate HRS years ----
+View(HRS_data[, c("HHIDPN", interview_end_date_vars,
+                  paste0(ADAMS_waves, "YEAR"))])
 
-HRS_data %<>% cbind(as.data.frame(matrix(nrow = nrow(HRS_data),
-                                         ncol = length(wu_dem_vars))))
-
-colnames(HRS_data)[(ncol(HRS_data) - 9):ncol(HRS_data)] <- dput(wu_dem_vars)
-
-for(i in 1:length(wu_dem_vars)){
-  if(i == 1){
-    probs <- pmax(HRS_data[, wu_demprobs_vars[i]],
-                  HRS_data[, wu_demprobs_vars[i + 1]], na.rm = TRUE)
-
-  } else{
-    probs <- HRS_data[, wu_demprobs_vars[i + 1]]
-  }
-  HRS_data[, wu_dem_vars[i]] = (probs >= 0.5)*1
+HRS_data <- t(HRS_data) %>% as.data.frame()
+for(i in 1:nrow(HRS_data)){
+  ADAMS_dates <- HRS_data[i, paste0(ADAMS_waves, "YEAR")]
+  HRS_dates <- HRS_data[i, interview_end_date_vars]
+  index <- max(which(as.numeric(ADAMS_dates[1]) - HRS_dates > 0))
 }
 
-#---- Sensitivity/Specificity LKW vs. Wu ----
+#---- Sensitivity/Specificity LKW vs. ADAMS ----
 #Can only consider those with directly measured cognitive assessments for now
-lkw_vs_wu <- sens_spec(HRS_data[, lkw_dem_vars], HRS_data[, wu_dem_vars])
+lkw_vs_ADAMS <- sens_spec(HRS_data[, lkw_dem_vars], HRS_data[, wu_dem_vars])
 
-#---- Sensitivity/Specificity IADLs vs. Wu ----
+#---- Sensitivity/Specificity IADLs vs. ADAMS ----
 #Can only consider those with directly measured IADLs for now
-IADL_vs_wu <- sens_spec(HRS_data[, IADL_dem_vars], HRS_data[, wu_dem_vars])
+IADL_vs_ADAMS <- sens_spec(HRS_data[, IADL_dem_vars], HRS_data[, wu_dem_vars])
 
 #---- BDI-LTM algorithm ----
 #Creating the fact table
