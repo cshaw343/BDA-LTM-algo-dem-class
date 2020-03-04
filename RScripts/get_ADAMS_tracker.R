@@ -37,3 +37,6 @@ adams_tracker <- read_fwf(file = data_path,
 
 # Add column labels to headers
 attributes(adams_tracker)$variable.labels <- df_dict$col.lbl
+
+adams_tracker %<>% as.data.frame() %>%
+  unite("HHIDPN", c("HHID", "PN"), sep = "")
