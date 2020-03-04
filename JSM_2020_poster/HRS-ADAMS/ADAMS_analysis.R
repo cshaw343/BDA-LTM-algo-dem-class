@@ -18,6 +18,7 @@ source(here::here("RScripts", "get_ADAMS_tracker.R"))
 #---- Pull ADAMS interview year from tracker file ----
 ADAMS_year <- adams_tracker %>%
   dplyr::select(c("HHIDPN", contains("YEAR")))
+ADAMS_year[ADAMS_year == 9997] <- NA #9997 is an incomplete interview
 
 #---- Read in the ADAMS data ----
 ADAMS_waves <- c("A", "B", "C", "D")
