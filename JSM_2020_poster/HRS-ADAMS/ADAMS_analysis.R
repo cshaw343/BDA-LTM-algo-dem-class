@@ -118,8 +118,8 @@ HRS_data %<>%
 HRS_data <- t(HRS_data)
 
 for(i in 1:ncol(HRS_data)){
-  ADAMS_dates <- as.numeric(HRS_data[paste0(ADAMS_waves, "YEAR"), i])
-  HRS_dates <- as.numeric(HRS_data[interview_end_date_vars, i])
+  ADAMS_dates <- HRS_data[paste0(ADAMS_waves, "YEAR"), i]
+  HRS_dates <- HRS_data[interview_end_date_vars, i]
   for(j in 1:length(ADAMS_dates)){
     if(is.na(ADAMS_dates[j])){next}
     else{
@@ -132,7 +132,7 @@ for(i in 1:ncol(HRS_data)){
   }
 }
 
-HRS_data <- t(HRS_data) %>% as.data.frame()
+HRS_data <- t(HRS_data)
 
 #---- Sensitivity/Specificity LKW vs. ADAMS ----
 #Can only consider those with directly measured cognitive assessments for now
@@ -141,7 +141,8 @@ lkw_vs_ADAMS <- sens_spec(HRS_data[, lkw_ADAMS_varnames],
 
 #---- Sensitivity/Specificity IADLs vs. ADAMS ----
 #Can only consider those with directly measured IADLs for now
-IADL_vs_ADAMS <- sens_spec(HRS_data[, IADL_dem_vars], HRS_data[, wu_dem_vars])
+IADL_vs_ADAMS <- sens_spec(HRS_data[, IADL_ADAMS_varnames],
+                           HRS_data[, paste0("dem_", ADAMS_waves)])
 
 #---- BDI-LTM algorithm ----
 #Creating the fact table
