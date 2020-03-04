@@ -57,5 +57,6 @@ get_ADAMS_demdx <- function(wave){
 
   df %<>% as.data.frame() %>% unite("HHIDPN", c("HHID", "PN"), sep = "")
 
-  return(df[, c("HHIDPN", "DCDRSTG", paste0("dem_", toupper(wave)))])
+  return(df[, c("HHIDPN", paste0(toupper(wave), "DCDRSTG"),
+                paste0("dem_", toupper(wave)))])
 }
