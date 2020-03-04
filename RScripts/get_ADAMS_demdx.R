@@ -52,10 +52,10 @@ get_ADAMS_demdx <- function(wave){
   #I'm leaving in the values of 97 in Wave A because I can't find anywhere in
   #the codebook that this means anything other than severe dementia
 
-  df[, paste0("dem", toupper(wave))] <- as.numeric(
+  df[, paste0("dem_", toupper(wave))] <- as.numeric(
     ifelse(df[, paste0(toupper(wave), "DCDRSTG")] >= 1, 1, 0))
 
   df %<>% as.data.frame() %>% unite("HHIDPN", c("HHID", "PN"), sep = "")
 
-  return(df[, c("HHIDPN", paste0(toupper(wave), "DCDRSTG"), "dem", "wave")])
+  return(df[, c("HHIDPN", "DCDRSTG", paste0("dem_", toupper(wave)))])
 }
