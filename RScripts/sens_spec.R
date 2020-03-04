@@ -1,11 +1,11 @@
 sens_spec <- function(test, gold){
   #unlist so that we can compare two vectors
   if(length(dim(test)) != 0){
-    test <- unlist(test)
+    test <- as.vector(test)
   }
 
   if(length(dim(gold)) != 0){
-    gold <- unlist(gold)
+    gold <- as.vector(gold)
   }
 
   matrix <- na.omit(cbind(test, gold))
