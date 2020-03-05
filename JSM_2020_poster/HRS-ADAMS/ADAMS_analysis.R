@@ -9,7 +9,7 @@ options(scipen = 999)
 set.seed(20200107)
 
 #---- Source scripts ----
-source(here::here("RScripts", "sens_spec.R"))
+source(here::here("RScripts", "sens_spec_acc.R"))
 source(here::here("RScripts", "beta_parameters.R"))
 source(here::here("RScripts", "collapsed_gibbs.R"))
 source(here::here("RScripts", "get_ADAMS_demdx.R"))
@@ -146,14 +146,15 @@ IADL_vs_ADAMS <- sens_spec(HRS_data[, IADL_ADAMS_varnames],
 
 #---- BDI-LTM algorithm ----
 #Creating the fact table
-fact_table <- HRS_data %>%
-  dplyr::select("HHIDPN", lkw_dem_vars, IADL_dem_vars) %>%
-  pivot_longer(c(lkw_dem_vars, IADL_dem_vars), names_to = "key",
+fact_table <- HRS_data %>% as.data.frame() %>%
+  dplyr::select("HHIDPN", lkw_ADAMS_varnames, IADL_ADAMS_varnames) %>%
+  pivot_longer(c(lkw_ADAMS_varnames, IADL_ADAMS_varnames), names_to = "key",
                values_to = "Dementia") %>%
   na.omit() %>%
-  mutate("Source" = case_when(str_detect(key, "LKW") ~ "LKW",
+  mutate("Source" = case_when(str_detect(key, "lkw") ~ "LKW",
                               TRUE ~ "IADL")) %>%
-  mutate_at("key", ~sub("(\\d)[^0-9]+$", "\\1", .)) %>%
+  mutate_at("key", ~sub("lkw", "dem", .)) %>%
+  mutate_at("key", ~sub("IADL", "dem", .)) %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_") %>%
   rownames_to_column("FID")
 
@@ -198,36 +199,33 @@ source_priors[2, colnames(source_priors)[-1]] <-
   c(IADL_sensitivity_pars, IADL_specificity_pars, IADL_truth_label_pars)
 
 #Creating the gold standard table
-gold_table <- HRS_data %>%
-  dplyr::select("HHIDPN", wu_dem_vars) %>%
-  pivot_longer(wu_dem_vars, names_to = "key", values_to = "gold") %>%
+gold_table <- HRS_data %>% as.data.frame() %>%
+  dplyr::select("HHIDPN", paste0("dem_", ADAMS_waves)) %>%
+  pivot_longer(paste0("dem_", ADAMS_waves),
+               names_to = "key", values_to = "gold") %>%
   na.omit() %>%
-  mutate_at("key", ~str_replace(., "WUDEM", "")) %>%
   unite(col = "Entity", c("HHIDPN", "key"), sep = "_")
 
 #---- Do analysis on subset ----
-people_in_sample <- sample(fact_table$Entity, size = 25000, replace = FALSE)
-fact_table_samp <- fact_table[which(fact_table$Entity %in% people_in_sample), ]
-
 plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
 start <- Sys.time()
-fact_table_samp$p_tf1 <- apply(fact_table_samp, 1,
-                               collapsed_gibbs, source_priors,
-                               thinning = 100, runs = 10000)
+fact_table$p_tf1 <- apply(fact_table, 1,
+                          collapsed_gibbs, source_priors,
+                          thinning = 100, runs = 1000)
 finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
 
 #Create a unique fact table
 fact_table_unique <-
   as.data.frame(matrix(ncol = 2,
-                       nrow = length(unique(fact_table_samp$Entity)))) %>%
+                       nrow = length(unique(fact_table$Entity)))) %>%
   set_colnames(c("Entity", "t_f")) %>%
-  mutate("Entity" = unique(fact_table_samp$Entity))
+  mutate("Entity" = unique(fact_table$Entity))
 
 #Update t_f based on expected p(t_f = 1)
 for(i in 1:nrow(fact_table_unique)){
-  rows <- which(fact_table_samp[, "Entity"] == fact_table_unique[i, "Entity"])
-  mean_t_f <- colMeans((fact_table_samp[rows, "p_tf1"]))
+  rows <- which(fact_table[, "Entity"] == fact_table_unique[i, "Entity"])
+  mean_t_f <- colMeans((fact_table[rows, "p_tf1"]))
 
   fact_table_unique[i, "t_f"] = (mean_t_f >= 0.5)*1
 }
@@ -236,4 +234,7 @@ for(i in 1:nrow(fact_table_unique)){
 fact_table_unique <- inner_join(fact_table_unique, gold_table, by = "Entity")
 
 #Sensitivity and specificity
-results <- sens_spec(fact_table_unique$t_f, fact_table_unique$gold)
+results <- sens_spec_acc(fact_table_unique$t_f, fact_table_unique$gold)
+
+#Accuracy
+
