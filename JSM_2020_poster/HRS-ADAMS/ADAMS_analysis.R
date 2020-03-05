@@ -211,7 +211,7 @@ plan(multiprocess, workers = 0.5*availableCores()) #Start cluster
 start <- Sys.time()
 fact_table$p_tf1 <- apply(fact_table, 1,
                           collapsed_gibbs, source_priors,
-                          thinning = 100, runs = 1000)
+                          thinning = 100, runs = 10000)
 finish <- Sys.time() - start
 plan(sequential)                                   #Shut down cluster
 
@@ -233,8 +233,7 @@ for(i in 1:nrow(fact_table_unique)){
 #Merging gold standard data with fact_table
 fact_table_unique <- inner_join(fact_table_unique, gold_table, by = "Entity")
 
-#Sensitivity and specificity
+#Sensitivity, specificity, accuracy
 results <- sens_spec_acc(fact_table_unique$t_f, fact_table_unique$gold)
 
-#Accuracy
 
