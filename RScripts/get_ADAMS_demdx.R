@@ -49,14 +49,16 @@ get_ADAMS_demdx <- function(wave){
   #0: No dementia
   #0.5: Questionable/very mild dementia
   #1-5: Increasing severity of dementia
-  #I'm leaving in the values of 97 in Wave A because I can't find anywhere in
-  #the codebook that this means anything other than severe dementia
-
+  #97: Incomplete assessment
+  if(length(which(df[, paste0(toupper(wave), "DCDRSTG")] == 97)) > 0){
+    df[df[, paste0(toupper(wave), "DCDRSTG")] == 97,
+       paste0(toupper(wave), "DCDRSTG")] <- NA
+  }
   df[, paste0("dem_", toupper(wave))] <- as.numeric(
     ifelse(df[, paste0(toupper(wave), "DCDRSTG")] >= 1, 1, 0))
 
   df %<>% as.data.frame() %>% unite("HHIDPN", c("HHID", "PN"), sep = "")
 
-  return(df[, c("HHIDPN", paste0(toupper(wave), "DCDRSTG"),
-                paste0("dem_", toupper(wave)))])
+  return(na.omit(df[, c("HHIDPN", paste0(toupper(wave), "DCDRSTG"),
+                paste0("dem_", toupper(wave)))]))
 }
