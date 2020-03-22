@@ -9,7 +9,7 @@ p_load("here", "tidyverse", "magrittr", "future.apply", "readr", "haven",
 options(scipen = 999)
 set.seed(20200107)
 
-#---- Read in the HRS data (wave 12) ----
+#---- Read in the HRS data (wave 13) ----
 #list of variables to read in from HRS data:
 # ID, Age, Sex/Gender, Race/Ethnicity, Years of education
 
@@ -25,8 +25,9 @@ HRS_data <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
 HRS_clean <- HRS_data %>%
   #Filter out those younger than 50
   filter(R13AGEY_B >= 50) %>%
-  #Remove those missing race data
+  #Remove those missing race/ethnicity data
   filter(!is.na(RARACEM)) %>%
+  filter(!is.na(RAHISPAN)) %>%
   #My age categories
   mutate_at("R13AGEY_B", floor) %>%
   mutate("my_age_cat" = case_when(R13AGEY_B %in% seq(50, 54) ~ "50-54",
@@ -86,8 +87,53 @@ NHATS_clean <- left_join(NHATS_w6, NHATS_w5, by = "spid") %>%
                                   elhigstschl == -9 ~ "missing"))
 
 
-#---- Read in HCAP data (wave 1) ----
+#---- Read in HCAP participant ids (wave 1) ----
+# Set path to the data file "*.da"
+data_path <- paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/HCAP/",
+                    "HC16/HC16da/HC16HP_R.da")
 
+# Set path to the dictionary file "*.dct"
+dict_path <- paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/HCAP/",
+                    "HC16/HC16sta/HC16HP_R.dct")
+
+# Read the dictionary file
+df_dict <- read.table(dict_path, skip = 2, fill = TRUE,
+                      stringsAsFactors = FALSE)
+
+#Set column names for dictionary dataframe
+colnames(df_dict) <- c("col.num", "col.type", "col.name", "col.width",
+                       "col.lbl")
+
+#Remove last row which only contains a closing}
+df_dict <- df_dict[-nrow(df_dict), ]
+
+#Extract numeric value from column width field
+df_dict$col.width <- as.integer(sapply(df_dict$col.width, gsub,
+                                       pattern = "[^0-9\\.]",
+                                       replacement = ""))
+
+#Convert column types to format to be used with read_fwf function
+df_dict$col.type <-
+  sapply(df_dict$col.type,
+         function(x) ifelse(x %in% c("int","byte","long"), "i",
+                            ifelse(x == "float", "n",
+                                   ifelse(x == "double", "d", "c"))))
+
+#Read the data file into a dataframe
+HCAP <- read_fwf(file = data_path,
+                 fwf_widths(widths = df_dict$col.width,
+                            col_names = df_dict$col.name),
+                 col_types = paste(df_dict$col.type, collapse = ""))
+
+# Add column labels to headers
+attributes(HCAP)$variable.labels <- df_dict$col.lbl
+
+HCAP %<>% as.data.frame() %>%
+  unite("HHIDPN", c("HHID", "PN"), sep = "")
+HCAP$HHIDPN = str_remove(HCAP$HHIDPN, "^0+")
+
+#Join HCAP with HRS data
+HRS_HCAP <- inner_join(HRS_clean, HCAP, by = "HHIDPN")
 
 #---- Filling in F31 Research Strategy Table 2 ----
 nrow(HRS_clean)
@@ -113,3 +159,14 @@ table(NHATS_clean$rl5dracehisp)
 table(NHATS_clean$rl5dracehisp)/nrow(NHATS_clean)
 table(NHATS_clean$my_edu_cat)
 table(NHATS_clean$my_edu_cat)/nrow(NHATS_clean)
+
+nrow(HRS_HCAP)
+table(HRS_HCAP$my_age_cat)
+table(HRS_HCAP$my_age_cat)/nrow(HRS_HCAP)
+# 1 = Male; 2 = Female
+table(HRS_HCAP$RAGENDER)
+table(HRS_HCAP$RAGENDER)/nrow(HRS_HCAP)
+# Race: 1 = White; 2 = Black; 3 = Other
+CrossTable(HRS_HCAP$RARACEM, HRS_HCAP$RAHISPAN)
+table(HRS_HCAP$my_edu_cat)
+table(HRS_HCAP$my_edu_cat)/nrow(HRS_HCAP)
