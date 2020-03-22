@@ -27,7 +27,23 @@ HRS_clean <- HRS_data %>%
   filter(R13AGEY_B >= 50) %>%
   #Remove those missing race data
   filter(!is.na(RARACEM)) %>%
-  mutate_at("R13AGEY_B", floor)
+  #My age categories
+  mutate_at("R13AGEY_B", floor) %>%
+  mutate("my_age_cat" = case_when(R13AGEY_B %in% seq(50, 54) ~ "50-54",
+                                  R13AGEY_B %in% seq(55, 59) ~ "55-59",
+                                  R13AGEY_B %in% seq(60, 64) ~ "60-64",
+                                  R13AGEY_B %in% seq(65, 69) ~ "65-69",
+                                  R13AGEY_B %in% seq(70, 74) ~ "70-74",
+                                  R13AGEY_B %in% seq(75, 79) ~ "75-79",
+                                  R13AGEY_B %in% seq(80, 84) ~ "80-84",
+                                  R13AGEY_B %in% seq(85, 89) ~ "85-89",
+                                  R13AGEY_B >= 90 ~ "90+")) %>%
+  #My education categories
+  mutate("my_edu_cat" = case_when(RAEDYRS %in% seq(0, 8) ~ "0-8",
+                                  RAEDYRS %in% seq(9, 12) ~ "9-12",
+                                  RAEDYRS %in% seq(13, 16) ~ "13-16",
+                                  RAEDYRS > 16 ~ ">16",
+                                  TRUE ~ "missing"))
 
 #---- Read in NHATS data (wave 1 and 5 (baseline data), 6) ----
 #list of variables to read in from HRS data:
@@ -75,15 +91,15 @@ NHATS_clean <- left_join(NHATS_w6, NHATS_w5, by = "spid") %>%
 
 #---- Filling in F31 Research Strategy Table 2 ----
 nrow(HRS_clean)
-mean(HRS_clean$R13AGEY_B)
-sd(HRS_clean$R13AGEY_B)
+table(HRS_clean$my_age_cat)
+table(HRS_clean$my_age_cat)/nrow(HRS_clean)
 # 1 = Male; 2 = Female
 table(HRS_clean$RAGENDER)
 table(HRS_clean$RAGENDER)/nrow(HRS_clean)
 # Race: 1 = White; 2 = Black; 3 = Other
 CrossTable(HRS_clean$RARACEM, HRS_clean$RAHISPAN)
-sum(HRS_clean$RAEDYRS > 12, na.rm = TRUE)
-sum(HRS_clean$RAEDYRS > 12, na.rm = TRUE)/nrow(HRS_clean)
+table(HRS_clean$my_edu_cat)
+table(HRS_clean$my_edu_cat)/nrow(HRS_clean)
 
 nrow(NHATS_clean)
 table(NHATS_clean$r6d2intvrage)
