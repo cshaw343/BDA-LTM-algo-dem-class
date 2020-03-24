@@ -40,10 +40,12 @@ HRS_clean <- HRS_data %>%
                                   R13AGEY_B %in% seq(85, 89) ~ "85-89",
                                   R13AGEY_B >= 90 ~ "90+")) %>%
   #My education categories
-  mutate("my_edu_cat" = case_when(RAEDYRS %in% seq(0, 8) ~ "0-8",
-                                  RAEDYRS %in% seq(9, 12) ~ "9-12",
-                                  RAEDYRS %in% seq(13, 16) ~ "13-16",
-                                  RAEDYRS > 16 ~ ">16",
+  mutate("my_edu_cat" = case_when(RAEDYRS == 0 ~ "No school completed",
+                                  RAEDYRS %in% seq(1, 8) ~ "1-8",
+                                  RAEDYRS %in% seq(9, 11) ~ "Some high school",
+                                  RAEDYRS == 12 ~ "High school diploma",
+                                  RAEDYRS %in% seq(13, 15) ~ "Some college",
+                                  RAEDYRS >= 16 ~ "Bachelor's degree or higher",
                                   TRUE ~ "missing"))
 
 #---- Read in NHATS data (wave 1 and 5 (baseline data), 6) ----
@@ -80,11 +82,14 @@ NHATS_clean <- left_join(NHATS_w6, NHATS_w5, by = "spid") %>%
   #Remove those not in the survey based on education variable
   filter(elhigstschl != -1) %>%
   #My education categories
-  mutate("my_edu_cat" = case_when(elhigstschl %in% c(-8, -7, 1, 2) ~ "0-8",
-                                  elhigstschl %in% c(3, 4) ~ "9-12",
-                                  elhigstschl %in% c(5, 6, 7, 8) ~ "13-16",
-                                  elhigstschl == 9 ~ ">16",
-                                  elhigstschl == -9 ~ "missing"))
+  mutate("my_edu_cat" = case_when(elhigstschl == 1 ~ "No school completed",
+                                  elhigstschl == 2 ~ "1-8",
+                                  elhigstschl %in% c(3) ~ "Some high school",
+                                  elhigstschl == 4 ~ "High school diploma",
+                                  elhigstschl %in% c(5, 6, 7) ~ "Some college",
+                                  elhigstschl %in% c(8, 9) ~
+                                    "Bachelor's degree or higher",
+                                  elhigstschl %in% c(-9, -8, -7) ~ "missing"))
 
 
 #---- Read in HCAP participant ids (wave 1) ----
